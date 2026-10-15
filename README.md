@@ -7,7 +7,9 @@
 
 ## 🎮 [브라우저에서 바로 플레이하기](https://dididip.github.io/cat-dream-story/)
 
-설치 없이 PC·휴대폰 브라우저에서 플레이할 수 있습니다. 게임 규칙은 Python 그대로 브라우저 안에서 실행됩니다([PyScript](https://pyscript.net)). 처음 열 때 Python을 불러오느라 몇 초 걸립니다.
+설치 없이 PC·휴대폰 브라우저에서 플레이할 수 있습니다. 움직이는 그림, 효과음, 결말 모으기가 들어간 웹 버전입니다.
+
+- Python 코드가 브라우저에서 그대로 돌아가는 버전: [Python(PyScript) 버전](https://dididip.github.io/cat-dream-story/python/) (처음 열 때 몇 초 걸림)
 
 | 잠들기 전 60초 | 꿈 장면 | 결말 |
 |---|---|---|
@@ -27,7 +29,8 @@
 | 파일 | 설명 |
 |---|---|
 | `cat_dream_story.py` | 데스크톱 버전 (tkinter 창) |
-| `docs/index.html`, `docs/main.py` | 웹 버전 (GitHub Pages). 규칙은 데스크톱과 같고 화면만 HTML·SVG로 그림 |
+| `docs/index.html` | 웹 버전 (GitHub Pages 첫 화면). 같은 규칙에 캔버스 애니메이션·효과음·결말 모으기 추가 |
+| `docs/python/` | Python(PyScript) 웹 버전. 규칙은 데스크톱과 같고 화면만 HTML·SVG로 그림 |
 
 ## 데스크톱 버전 실행 방법
 

@@ -1,113 +1,1351 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>고양이의 꿈 일기</title>
-  <meta name="description" content="딱 세 번의 선택으로 아침을 맞는 Python 선택지 게임">
-  <!-- PyScript: 브라우저 안에서 Python을 실행해 주는 도구 -->
-  <link rel="stylesheet" href="https://pyscript.net/releases/2025.2.4/core.css">
-  <script type="module" src="https://pyscript.net/releases/2025.2.4/core.js"></script>
-  <style>
-    :root {
-      --bg: #f6f3ff; --ink: #2b2257; --soft: #6b5fb5; --card: #efe8ff;
-      --muted: #e6e3ef; --accent: #0f766e; --warn: #e63946; --gold: #b5651d;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink);
-           font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
-    .app { max-width: 720px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 1.5rem; margin: 4px 0 2px; }
-    .sub { margin: 0 0 12px; color: var(--soft); font-size: .9rem; }
-    #loading { padding: 60px 16px; text-align: center; color: var(--soft); }
-    #loading .dot { display: inline-block; animation: bob 1s infinite ease-in-out; }
-    @keyframes bob { 50% { transform: translateY(-6px); } }
-    .stage svg { display: block; width: 100%; height: auto; border-radius: 12px; }
-    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
-    #choices { font-size: 1.25rem; font-weight: 700; }
-    #stats, #bag { font-size: .9rem; margin-top: 2px; }
-    #bag { color: var(--soft); }
-    #story { min-height: 4.2em; margin: 10px 0; font-weight: 700; white-space: pre-line; line-height: 1.5; }
-    button { font: inherit; border: 0; border-radius: 10px; cursor: pointer; color: var(--ink); }
-    button:disabled { cursor: not-allowed; }
-    .dark { background: var(--ink); color: #fff; padding: 8px 14px; font-weight: 700; }
-    .grid { display: grid; gap: 8px; }
-    #items { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
-    #items button { background: var(--card); padding: 10px 6px; font-size: .85rem; line-height: 1.35; }
-    #items button b { display: block; font-size: .95rem; }
-    #items button.picked { background: #ffd166; box-shadow: inset 0 0 0 2px #b8860b; }
-    .prep-side { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 8px; }
-    #timer { font-size: 1.3rem; font-weight: 700; }
-    #timer.hurry { color: var(--warn); }
-    #dream { grid-template-columns: repeat(3, 1fr) auto; }
-    #dream .choice { background: var(--card); padding: 12px 8px; font-weight: 700; font-size: .9rem; min-height: 64px; }
-    #dream .choice small { display: block; font-weight: 400; color: var(--soft); }
-    #dream .choice.waiting { background: var(--muted); color: #6b6b80; }
-    #dream .choice.locked, #dream .choice:disabled { background: #ece9f5; color: #a8a3bd; }
-    #dream .choice.over { background: #d6d6d6; color: #888; }
-    #next { padding: 12px 14px; font-weight: 700; background: #d6d6d6; color: #888; }
-    #next:enabled { background: var(--ink); color: #fff; }
-    .pulse { animation: pulse .5s 2; }
-    @keyframes pulse { 50% { transform: scale(1.08); } }
-    .flash { animation: flash .24s 3; }
-    @keyframes flash { 50% { color: var(--warn); } }
-    h2 { font-size: 1rem; margin: 14px 0 6px; }
-    #diary { margin: 0; padding: 10px 10px 10px 30px; background: #fff; border-radius: 10px;
-             font-size: .85rem; min-height: 90px; line-height: 1.6; }
-    .keys { color: var(--soft); font-size: .8rem; margin-top: 10px; }
-    footer { margin-top: 18px; font-size: .8rem; color: var(--soft); }
-    footer a { color: var(--soft); }
-    [hidden] { display: none !important; }
-    @media (max-width: 560px) {
-      #dream { grid-template-columns: 1fr; }
-      .keys { display: none; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="딱 세 번의 선택으로 아침을 맞는 고양이 꿈 선택지 게임">
+<style>[hidden] { display: none !important; }</style>
+<title>고양이의 꿈 일기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: one column "dream journal" — a living canvas window on top, the cat's state and choices stacked under it like diary pages. Single, deliberate night theme. */
+:root {
+  --night: #140f2b;      /* page ground */
+  --dusk: #1f1842;       /* panels */
+  --dusk-2: #2a2257;     /* raised controls */
+  --line: #3b3270;       /* hairlines */
+  --ink: #efe9ff;        /* main text */
+  --muted: #a69dd4;      /* secondary text */
+  --moon: #ffd98a;       /* accent: moonlight gold */
+  --moon-ink: #3a2600;   /* text on gold */
+  --fur: #f4a259;        /* the cat */
+  --good: #7fe0c4;       /* positive change */
+  --bad: #ff8a8a;        /* warnings, negative */
+  --courage: #ffb44c;
+  --full: #7fe0c4;
+  --sleepy: #a99bff;
+  --font-display: "Jua", "Gowun Dodum", "Malgun Gothic", sans-serif;
+  --font-body: "Gowun Dodum", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2b2160 0%, transparent 60%),
+    var(--night);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.game {
+  max-width: 840px;
+  margin: 0 auto;
+  padding-block: 20px 40px;
+  padding-inline: 16px;
+  display: grid;
+  gap: 14px;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, summary:focus-visible { outline: 3px solid var(--moon); outline-offset: 2px; }
+kbd {
+  font-family: var(--font-body);
+  font-size: .72em;
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid currentColor;
+  opacity: .7;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- header ---------- */
+.hud { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  line-height: 1.1;
+  margin: 0;
+  color: var(--moon);
+  text-wrap: balance;
+}
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+.hud-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pips { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--dusk); border: 1px solid var(--line); }
+.pips .lab { font-size: .8rem; color: var(--muted); margin-right: 2px; letter-spacing: .02em; }
+.pip { width: 18px; height: 18px; border-radius: 50%; background: var(--moon); box-shadow: 0 0 10px rgba(255, 217, 138, .6); transition: background .3s, box-shadow .3s, transform .3s; }
+.pip.used { background: transparent; box-shadow: inset 0 0 0 2px var(--line); transform: scale(.85); }
+.pips.shake { animation: shake .5s; border-color: var(--bad); }
+.pips.shake .pip.used { box-shadow: inset 0 0 0 2px var(--bad); }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.ghost {
+  border: 1px solid var(--line);
+  background: var(--dusk);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: .85rem;
+}
+.ghost:hover { background: var(--dusk-2); }
+
+/* ---------- stage ---------- */
+.stage {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  aspect-ratio: 2 / 1;
+  max-width: 100%;
+  background: #1a1440;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+}
+.stage canvas { display: block; width: 100%; height: 100%; }
+.stage-label {
+  position: absolute; left: 14px; top: 12px;
+  font-family: var(--font-display);
+  font-size: clamp(.95rem, 2.6vw, 1.25rem);
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+  pointer-events: none;
+}
+.timer {
+  position: absolute; right: 12px; top: 12px;
+  width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: conic-gradient(var(--ring, var(--moon)) calc(var(--p, 1) * 360deg), rgba(255, 255, 255, .12) 0);
+}
+.timer::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: rgba(20, 15, 43, .88); }
+.timer span { position: relative; font-family: var(--font-display); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.timer.hurry { --ring: var(--bad); animation: pulse 1s infinite; }
+@keyframes pulse { 50% { transform: scale(1.07); } }
+.intro {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  text-align: center; padding: 16px;
+  background: radial-gradient(closest-side, rgba(20, 15, 43, .78), rgba(20, 15, 43, .35));
+}
+.intro h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.4rem, 5vw, 2.4rem); margin: 0; color: var(--moon); text-wrap: balance; }
+.intro p { margin: 0; max-width: 34ch; color: var(--ink); font-size: clamp(.82rem, 2.4vw, 1rem); }
+.big {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.8vw, 1.2rem);
+  border: 0; border-radius: 999px;
+  padding: 10px 24px;
+  background: var(--moon); color: var(--moon-ink);
+  box-shadow: 0 6px 0 #b98a2c, 0 10px 30px rgba(255, 217, 138, .35);
+  transition: transform .12s, box-shadow .12s;
+}
+.big:hover { transform: translateY(-2px); }
+.big:active { transform: translateY(4px); box-shadow: 0 2px 0 #b98a2c; }
+.big[disabled] { background: var(--dusk-2); color: var(--muted); box-shadow: none; cursor: default; transform: none; }
+
+/* ---------- stats ---------- */
+.stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+}
+.meter {
+  position: relative;
+  background: var(--dusk); border: 1px solid var(--line); border-radius: 14px;
+  padding: 10px 12px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px;
+}
+.m-name { font-family: var(--font-display); font-size: 1.05rem; }
+.m-val { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .85rem; }
+.segs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.seg { height: 10px; border-radius: 3px; background: rgba(255, 255, 255, .08); transition: background .35s, box-shadow .35s; }
+.meter[data-stat="courage"] .seg.on { background: var(--courage); box-shadow: 0 0 8px rgba(255, 180, 76, .5); }
+.meter[data-stat="full"] .seg.on { background: var(--full); box-shadow: 0 0 8px rgba(127, 224, 196, .45); }
+.meter[data-stat="sleepy"] .seg.on { background: var(--sleepy); box-shadow: 0 0 8px rgba(169, 155, 255, .5); }
+.m-hint { grid-column: 1 / -1; font-size: .75rem; color: var(--muted); }
+.delta {
+  position: absolute; right: 10px; top: -12px;
+  font-family: var(--font-display); font-size: 1rem;
+  padding: 0 8px; border-radius: 999px;
+  opacity: 0; pointer-events: none;
+}
+.delta.show { animation: pop 1.6s ease-out forwards; }
+.delta.good { background: var(--good); color: #0b3a2e; }
+.delta.bad { background: var(--bad); color: #4a0b0b; }
+@keyframes pop { 0%{opacity:0;transform:translateY(8px) scale(.6)} 15%{opacity:1;transform:translateY(0) scale(1.15)} 30%{transform:scale(1)} 80%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
+
+/* ---------- story ---------- */
+.story {
+  background: var(--dusk); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px 18px; min-height: 88px;
+  cursor: pointer;
+}
+.story p { margin: 0; font-size: 1.08rem; line-height: 1.7; max-width: 62ch; }
+.story[data-tone="good"] p { color: var(--good); }
+.story[data-tone="warn"] p { color: var(--bad); }
+.story[data-tone="end"] p { color: var(--moon); }
+.story .sub { margin-top: 4px; font-size: .9rem; color: var(--muted); }
+.story .caret { display: inline-block; width: .5em; animation: blink 1s steps(1) infinite; color: var(--moon); }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- prep ---------- */
+.panel { display: grid; gap: 12px; }
+.items { display: flex; flex-wrap: wrap; gap: 10px; }
+.item {
+  flex: 1 1 130px; min-width: 0;
+  display: grid; justify-items: center; gap: 2px;
+  padding: 12px 8px 10px;
+  border-radius: 16px;
+  background: var(--dusk); border: 2px solid var(--line);
+  text-align: center;
+  transition: transform .15s, border-color .2s, background .2s;
+}
+.item:hover { transform: translateY(-3px); border-color: var(--muted); }
+.item canvas { width: 56px; height: 56px; }
+.item b { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; }
+.item small { color: var(--muted); font-size: .78rem; line-height: 1.35; }
+.item .num { font-size: .7rem; color: var(--muted); }
+.item.picked { background: #3a2f12; border-color: var(--moon); }
+.item.picked b { color: var(--moon); }
+.item.full { opacity: .55; }
+.bagrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.bag { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--muted); }
+.slot {
+  min-width: 92px; padding: 4px 12px; border-radius: 999px;
+  border: 1px dashed var(--line); color: var(--muted); text-align: center; font-size: .9rem;
+}
+.slot.on { border: 1px solid var(--moon); color: var(--moon); background: rgba(255, 217, 138, .08); }
+
+/* ---------- dream choices ---------- */
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.choice {
+  position: relative;
+  display: grid; align-content: start; gap: 6px;
+  text-align: left;
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+  background: var(--dusk-2); border: 2px solid var(--line);
+  min-height: 108px;
+  transition: transform .15s, border-color .2s, opacity .25s, background .2s;
+}
+.choice:hover:not([disabled]) { transform: translateY(-3px); border-color: var(--moon); }
+.choice .key {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: grid; place-items: center;
+  font-family: var(--font-display); font-size: 1rem;
+  background: var(--moon); color: var(--moon-ink);
+}
+.choice .txt { font-family: var(--font-display); font-size: 1.12rem; line-height: 1.35; }
+.choice .need { justify-self: start; font-size: .75rem; padding: 1px 8px; border-radius: 999px; }
+.choice .need.have { background: rgba(127, 224, 196, .15); color: var(--good); }
+.choice .need.miss { background: rgba(255, 255, 255, .06); color: var(--muted); }
+.choice.locked { opacity: .45; cursor: not-allowed; background: var(--dusk); }
+.choice.locked .key { background: var(--line); color: var(--muted); }
+.choice.dim { opacity: .4; }
+.choice.picked { border-color: var(--good); background: #183a3a; opacity: 1; }
+.choice.picked .key { background: var(--good); color: #0b3a2e; }
+.choice.ended { opacity: .35; background: var(--dusk); }
+.choice.ended .key { background: var(--line); color: var(--muted); }
+.next { justify-self: end; }
+.next.nudge { animation: shake .45s; }
+
+/* ---------- ending ---------- */
+.end {
+  background: var(--dusk); border: 1px solid var(--moon); border-radius: 18px;
+  padding: 18px;
+  display: grid; gap: 14px;
+}
+.end-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.end h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.8rem; margin: 0; color: var(--moon); line-height: 1.2; }
+.end .eyebrow { font-size: .78rem; color: var(--muted); letter-spacing: .08em; }
+.score { text-align: right; }
+.score b { font-family: var(--font-display); font-weight: 400; font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ink); }
+.score .best { display: block; font-size: .85rem; color: var(--muted); }
+.score .new { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--moon); color: var(--moon-ink); font-size: .78rem; }
+.calc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.calc div { background: var(--night); border-radius: 12px; padding: 8px 10px; }
+.calc span { display: block; font-size: .75rem; color: var(--muted); }
+.calc b { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.collection h3 { margin: 0 0 6px; font-size: .85rem; font-weight: 400; color: var(--muted); letter-spacing: .04em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 3px 12px; border-radius: 999px; font-size: .85rem; border: 1px solid var(--line); color: var(--muted); }
+.chip.got { border-color: var(--moon); color: var(--moon); }
+.chip.now { background: var(--moon); color: var(--moon-ink); }
+
+/* ---------- diary ---------- */
+.diary { background: var(--dusk); border: 1px solid var(--line); border-radius: 16px; padding: 10px 16px; }
+.diary summary { font-family: var(--font-display); font-size: 1.05rem; cursor: pointer; }
+.diary ol { margin: 8px 0 4px; padding-left: 1.4em; color: var(--muted); font-size: .9rem; display: grid; gap: 3px; }
+.diary li:last-child { color: var(--ink); }
+.diary .empty { color: var(--muted); font-size: .9rem; margin: 8px 0 4px; }
+.help { color: var(--muted); font-size: .8rem; text-align: center; margin: 0; }
+
+@media (max-width: 620px) {
+  .stats { grid-template-columns: 1fr; }
+  .choices { grid-template-columns: 1fr; }
+  .choice { min-height: 0; grid-template-columns: auto 1fr; align-items: center; }
+  .choice .need { grid-column: 2; }
+  .calc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .timer { width: 48px; height: 48px; }
+  .timer span { font-size: 1.05rem; }
+  .next { justify-self: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
 </head>
 <body>
-  <main class="app">
-    <h1>🐱 고양이의 꿈 일기</h1>
-    <p class="sub">꿈속에서 고를 수 있는 선택은 딱 세 번. 아침을 맞을 수 있을까요?</p>
 
-    <div id="loading"><span class="dot">💤</span> 꿈을 불러오는 중이에요… (처음엔 몇 초 걸려요)</div>
-
-    <section id="game" hidden>
-      <div id="stage" class="stage"></div>
-      <div class="row">
-        <span id="choices"></span>
-        <button id="restart" class="dark">↺ 다시 시작</button>
+<main class="game">
+  <header class="hud">
+    <div class="brand">
+      <h1>고양이의 꿈 일기</h1>
+      <p>꿈속에서 고를 수 있는 건 딱 세 번뿐이에요</p>
+    </div>
+    <div class="hud-right">
+      <div class="pips" id="pips" role="status" aria-label="남은 선택">
+        <span class="lab">남은 선택</span>
+        <span class="pip"></span><span class="pip"></span><span class="pip"></span>
       </div>
-      <div id="stats"></div>
-      <div id="bag"></div>
-      <p id="story"></p>
+      <button class="ghost" id="soundBtn" type="button" aria-pressed="true">소리 켬</button>
+      <button class="ghost" id="restartBtn" type="button">다시 시작 <kbd>R</kbd></button>
+    </div>
+  </header>
 
-      <div id="prep">
-        <div id="items" class="grid"></div>
-        <div class="prep-side">
-          <span id="timer"></span>
-          <button id="sleep" class="dark">잠들기 ▶</button>
+  <section class="stage" aria-label="꿈 장면">
+    <canvas id="scene"></canvas>
+    <div class="stage-label" id="stageLabel">잠들기 전 60초</div>
+    <div class="timer" id="timer" hidden><span id="timerNum">60</span></div>
+    <div class="intro" id="intro">
+      <h2>졸린 고양이를 깨워 주세요</h2>
+      <p>60초 동안 꿈에 가져갈 물건 2개를 챙기고, 꿈속에서 딱 세 번 골라 아침을 맞이하세요.</p>
+      <button class="big" id="startBtn" type="button">가방 싸기 시작 <kbd>Space</kbd></button>
+    </div>
+  </section>
+
+  <section class="stats" id="stats" aria-label="고양이 상태"></section>
+
+  <section class="story" id="storyBox" data-tone="normal" title="눌러서 글 바로 보기">
+    <p id="story"></p>
+    <div class="sub" id="storySub"></div>
+    <div class="sr" aria-live="polite" id="storyLive"></div>
+  </section>
+
+  <section class="panel" id="prepPanel" aria-label="가방 싸기">
+    <div class="items" id="items"></div>
+    <div class="bagrow">
+      <div class="bag"><span>가방</span><span class="slot" id="slot0">빈 칸</span><span class="slot" id="slot1">빈 칸</span></div>
+      <button class="big" id="sleepBtn" type="button">잠들기 ▶ <kbd>Space</kbd></button>
+    </div>
+  </section>
+
+  <section class="panel" id="endPanel" hidden aria-label="결말">
+    <div class="end">
+      <div class="end-top">
+        <div>
+          <div class="eyebrow">오늘 아침의 결말</div>
+          <h2 id="endTitle"></h2>
+        </div>
+        <div class="score">
+          <b id="endScore">0</b>
+          <span class="best" id="endBest"></span>
         </div>
       </div>
-
-      <div id="dream" class="grid" hidden>
-        <button class="choice" id="choice-0"></button>
-        <button class="choice" id="choice-1"></button>
-        <button class="choice" id="choice-2"></button>
-        <button id="next">다음 ▶</button>
+      <div class="calc" id="endCalc"></div>
+      <div class="collection">
+        <h3>모은 결말 <span id="collectCount"></span></h3>
+        <div class="chips" id="endChips"></div>
       </div>
+      <button class="big" id="againBtn" type="button">다시 꿈꾸기 <kbd>R</kbd></button>
+    </div>
+  </section>
 
-      <p class="keys">키보드: A·B·C = 선택 · 스페이스 = 잠들기/다음 · R = 다시 시작</p>
-      <h2>꿈 일기</h2>
-      <ol id="diary"></ol>
-    </section>
+  <section class="panel" id="dreamPanel" hidden aria-label="꿈속 선택">
+    <div class="choices" id="choices">
+      <button class="choice" type="button"></button>
+      <button class="choice" type="button"></button>
+      <button class="choice" type="button"></button>
+    </div>
+    <button class="big next" id="nextBtn" type="button" hidden>다음 꿈으로 ▶ <kbd>Space</kbd></button>
+  </section>
 
-    <footer>
-      Python(PyScript)으로 브라우저에서 실행됩니다 ·
-      <a href="https://github.com/DIDIDIP/cat-dream-story">소스 코드</a>
-    </footer>
-  </main>
+  <details class="diary" id="diaryBox" open>
+    <summary>꿈 일기</summary>
+    <ol id="diary"></ol>
+  </details>
 
-  <!-- 게임 규칙과 화면 동작은 모두 main.py(파이썬)에 있습니다 -->
-  <script type="py" src="./main.py"></script>
+  <p class="help">키보드: A·B·C 또는 1·2·3 = 선택 · Space = 다음 · R = 다시 시작 · 준비 중에는 1~5로 물건 챙기기</p>
+  <p class="help"><a href="https://github.com/DIDIDIP/cat-dream-story" style="color:inherit">소스 코드</a> · <a href="python/" style="color:inherit">Python(PyScript) 버전</a></p>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const TAU = Math.PI * 2;
+  // ================= 설정값 =================
+  const MAX_CHOICES = 3, PREP_SECONDS = 60, MAX_ITEMS = 2, STAT_MAX = 6;
+  const START_STATS = { courage: 1, full: 1, sleepy: 4 };
+  const STAT_NAMES = { courage: "용기", full: "배부름", sleepy: "졸음" };
+  const STAT_HINT = { courage: "높을수록 좋아요", full: "적당히 있으면 점수 +", sleepy: "낮을수록 잘 깨어나요" };
+  const BEST_KEY = "cat-dream-best", SEEN_KEY = "cat-dream-endings";
+
+  const ITEMS = {
+    "열쇠": "어딘가의 문을 열 수 있을지도",
+    "손전등": "어두운 곳에서 쓸모 있음",
+    "생선 간식": "누군가와 나눠 먹을 수 있음",
+    "털실 공": "놀이 친구를 사귈 때 좋음",
+    "방울": "딸랑딸랑, 멀리까지 들림",
+  };
+
+  const SCENES = {
+    door: { title: "수상한 문", sky: ["#241c4f", "#4b3a8c"],
+      text: "꿈속 복도 끝에 반짝이는 수상한 문이 있어요. 문틈으로 바람이 솔솔 불어와요.",
+      choices: [
+        { label: "열쇠로 문을 연다", need: "열쇠", effect: { courage: 1, sleepy: -2 }, result: "철컥! 문 너머에서 아침 햇살 냄새가 나요. 잠이 확 달아났어요." },
+        { label: "앞발로 문을 긁는다", need: null, effect: { courage: 1 }, result: "드르륵드르륵… 문은 꿈쩍도 안 하지만 조금 용감해진 기분이에요." },
+        { label: "문 앞에서 식빵 자세로 쉰다", need: null, effect: { sleepy: 2 }, result: "따뜻한 바람에 스르르… 꿈이 더 깊어졌어요." },
+      ] },
+    river: { title: "생선이 헤엄치는 강", sky: ["#13284a", "#2f5c8a"],
+      text: "은빛 생선이 헤엄치는 강이 나타났어요. 배에서 꼬르륵 소리가 나요.",
+      choices: [
+        { label: "앞발로 생선을 낚아챈다", need: null, effect: { full: 2, sleepy: 1 }, result: "냠냠! 배는 불렀지만 졸음이 쏟아져요." },
+        { label: "생선 간식을 나눠 준다", need: "생선 간식", effect: { courage: 1, sleepy: -2 }, result: "고마워진 물고기들이 '이쪽이 출구야!' 하고 길을 알려 줬어요." },
+        { label: "강가에 앉아 구경한다", need: null, effect: { sleepy: 1 }, result: "찰랑찰랑 물결 소리가 자장가 같아요…" },
+      ] },
+    cave: { title: "깜깜한 동굴", sky: ["#0b0816", "#1b1430"],
+      text: "앞이 하나도 안 보이는 깜깜한 동굴이에요. 어디선가 똑, 똑 물방울 소리가 나요.",
+      choices: [
+        { label: "손전등을 켠다", need: "손전등", effect: { courage: 1, sleepy: -2 }, result: "환해졌어요! 동굴 끝에 빛나는 출구가 보여요." },
+        { label: "수염으로 더듬으며 간다", need: null, effect: { courage: 1 }, result: "수염 레이더 작동! 조심조심 동굴을 빠져나왔어요." },
+        { label: "무서워서 몸을 웅크린다", need: null, effect: { courage: -1, sleepy: 1 }, result: "웅크리고 있다가 그만 더 깊이 잠들었어요." },
+      ] },
+    yarn: { title: "집채만 한 털실 공", sky: ["#2d1f4d", "#5a3a7a"],
+      text: "집채만 한 털실 공이 데굴데굴 굴러와요. 놀고 싶어서 꼬리가 씰룩거려요.",
+      choices: [
+        { label: "털실 공과 신나게 논다", need: null, effect: { courage: 1, sleepy: 1 }, result: "신났지만 너무 놀아서 노곤노곤…" },
+        { label: "풀린 털실 끝을 따라간다", need: null, effect: { sleepy: -1 }, result: "털실 끝에 '기상 →' 이라고 적힌 표지판이 있었어요!" },
+        { label: "내 털실 공을 굴려 준다", need: "털실 공", effect: { courage: 2, sleepy: -1 }, result: "작은 털실 공을 받은 큰 털실 공이 길을 비켜 줬어요. 의기양양!" },
+      ] },
+    dog: { title: "그림자 강아지", sky: ["#1c1b2c", "#3a3550"],
+      text: "커다란 그림자 강아지가 길을 막고 '왈!' 하고 짖어요.",
+      choices: [
+        { label: "하악! 하고 맞선다", need: null, effect: { courage: 2, sleepy: -1 }, result: "그림자 강아지가 깜짝 놀라 도망갔어요. 심장이 두근두근, 잠이 깼어요." },
+        { label: "털실 공을 던져 준다", need: "털실 공", effect: { courage: 1, full: 1, sleepy: -1 }, result: "강아지가 털실을 쫓으며 꼬리를 흔들어요. 친구가 돼서 간식도 나눠 줬어요!" },
+        { label: "높은 곳으로 숨는다", need: null, effect: { courage: -1, sleepy: 1 }, result: "숨어 있는 동안 꾸벅꾸벅 졸았어요…" },
+      ] },
+    bed: { title: "구름 침대", sky: ["#3a2f6e", "#8a7cc9"],
+      text: "폭신폭신한 구름 침대가 둥실 떠 있어요. 보기만 해도 눈꺼풀이 무거워져요.",
+      choices: [
+        { label: "구름 침대를 뛰어넘는다", need: null, effect: { sleepy: -1 }, result: "폴짝! 유혹을 이겨냈어요." },
+        { label: "꾹꾹이를 한다", need: null, effect: { full: 1, sleepy: 1 }, result: "꾹꾹꾹… 기분은 최고인데 졸려요." },
+        { label: "그대로 눕는다", need: null, effect: { sleepy: 3 }, result: "쿨쿨… 아주 깊은 잠에 빠졌어요." },
+      ] },
+    alarm: { title: "멀리서 들리는 알람 소리", sky: ["#3b2f75", "#c98a7a"],
+      text: "멀리서 '따르릉…' 알람 소리가 들려요! 꿈속 마지막 선택이에요.",
+      choices: [
+        { label: "소리 나는 쪽으로 달린다", need: null, effect: { sleepy: -2 }, result: "헉헉! 소리가 점점 커져요." },
+        { label: "방울을 흔들어 대답한다", need: "방울", effect: { courage: 1, sleepy: -3 }, result: "딸랑딸랑! 꿈과 현실이 이어졌어요." },
+        { label: "앞발로 귀를 막는다", need: null, effect: { sleepy: 2 }, result: "조용해졌어요… 그리고 다시 꿈속으로." },
+      ] },
+  };
+  const FINAL_SCENE = "alarm";
+  const RANDOM_SCENES = Object.keys(SCENES).filter(k => k !== FINAL_SCENE);
+
+  const ENDINGS = {
+    brave:     { title: "용감한 아침", story: "기지개를 쭉 켜고 번쩍 일어났어요. 오늘은 뭐든 할 수 있을 것 같아요!", bonus: 100, ok: true },
+    fresh:     { title: "상쾌한 아침", story: "알람 소리에 눈을 떴어요. 창밖 햇살이 따뜻해요.", bonus: 60, ok: true },
+    groggy:    { title: "비몽사몽 아침", story: "눈은 떴지만 아직 반쯤 꿈속… 하품이 멈추지 않아요.", bonus: 20, ok: true },
+    nightmare: { title: "끝나지 않는 악몽", story: "무서운 꿈속을 계속 헤매고 있어요. 다음엔 용기를 내 봐요.", bonus: 0, ok: false },
+    endless:   { title: "끝나지 않는 꿈", story: "알람이 울렸지만 쿨쿨… 오늘은 지각이에요.", bonus: 0, ok: false },
+  };
+
+  // ================= 저장 (브라우저에만) =================
+  function loadJSON(key, fallback) {
+    try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch (e) { return fallback; }
+  }
+  function saveJSON(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 저장이 막힌 환경 */ }
+  }
+  function loadBest() { const b = loadJSON(BEST_KEY, 0); return Number.isInteger(b) && b >= 0 ? b : 0; }
+
+  // ================= 효과음 =================
+  let audio = null, soundOn = true;
+  function ensureAudio() {
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+    } catch (e) { audio = null; }
+  }
+  function tone(freq, dur, { type = "sine", vol = 0.07, delay = 0, slide = 0 } = {}) {
+    if (!soundOn || !audio) return;
+    const t0 = audio.currentTime + delay;
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(audio.destination);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+  const sfx = {
+    pick() { tone(660, .12, { type: "triangle" }); tone(990, .16, { type: "triangle", delay: .06 }); },
+    drop() { tone(520, .16, { type: "triangle", slide: .6 }); },
+    full() { tone(220, .14, { type: "square", vol: .04 }); },
+    tick() { tone(1250, .05, { vol: .035 }); },
+    sleep() { [784, 659, 523, 392].forEach((f, i) => tone(f, .5, { delay: i * .16 })); },
+    choose() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .28, { type: "triangle", delay: i * .06 })); },
+    next() { tone(392, .2, { slide: 1.5 }); },
+    blocked() { tone(170, .16, { type: "square", vol: .045 }); tone(140, .22, { type: "square", vol: .045, delay: .13 }); },
+    alarm() { for (let i = 0; i < 8; i++) tone(i % 2 ? 1320 : 1480, .06, { type: "square", vol: .025, delay: i * .07 }); },
+    good() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, .4, { type: "triangle", delay: i * .1 })); },
+    bad() { [440, 392, 349, 294].forEach((f, i) => tone(f, .5, { delay: i * .18 })); },
+  };
+
+  // ================= 상태 =================
+  let S = null;
+  let prepTimer = null;
+
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function newState() {
+    return {
+      phase: "title", items: [], stats: { ...START_STATS },
+      choicesLeft: MAX_CHOICES,
+      order: shuffle(RANDOM_SCENES.slice()).slice(0, MAX_CHOICES - 1).concat(FINAL_SCENE),
+      index: 0, timeLeft: PREP_SECONDS, log: [], blocked: 0, picked: -1,
+      ending: null, best: loadBest(), newBest: false,
+    };
+  }
+  const currentScene = () => SCENES[S.order[S.index]];
+
+  function applyEffect(effect) {
+    const parts = [];
+    for (const [key, amount] of Object.entries(effect)) {
+      S.stats[key] = Math.max(0, Math.min(STAT_MAX, S.stats[key] + amount));
+      parts.push(`${STAT_NAMES[key]} ${amount > 0 ? "+" : ""}${amount}`);
+      showDelta(key, amount);
+    }
+    return parts.join(", ");
+  }
+
+  function decideEnding() {
+    const s = S.stats;
+    const base = s.courage * 20 + s.full * 10 + (STAT_MAX - s.sleepy) * 15;
+    let id;
+    if (s.sleepy <= 1 && s.courage >= 3) id = "brave";
+    else if (s.sleepy <= 1) id = "fresh";
+    else if (s.sleepy <= 3) id = "groggy";
+    else if (s.courage === 0) id = "nightmare";
+    else id = "endless";
+    const e = ENDINGS[id];
+    let story = e.story;
+    if (s.full >= 4) story += " 배가 너무 불러서 입맛을 다시고 있어요.";
+    return { id, ...e, story, base, score: base + e.bonus, stats: { ...s } };
+  }
+
+  // ================= DOM =================
+  const $ = id => document.getElementById(id);
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const choiceBtns = [...$("choices").children];
+  const pipEls = [...$("pips").querySelectorAll(".pip")];
+
+  // 상태 막대
+  const meterEls = {};
+  for (const key of Object.keys(STAT_NAMES)) {
+    const m = document.createElement("div");
+    m.className = "meter"; m.dataset.stat = key;
+    m.innerHTML = `<span class="m-name">${STAT_NAMES[key]}</span><span class="segs">${'<span class="seg"></span>'.repeat(STAT_MAX)}</span><span class="m-val"></span><span class="m-hint">${STAT_HINT[key]}</span><span class="delta"></span>`;
+    $("stats").appendChild(m);
+    meterEls[key] = m;
+  }
+  function showDelta(key, amount) {
+    const d = meterEls[key].querySelector(".delta");
+    const good = key === "sleepy" ? amount < 0 : amount > 0;
+    d.textContent = (amount > 0 ? "+" : "") + amount;
+    d.className = "delta " + (good ? "good" : "bad");
+    void d.offsetWidth;
+    d.classList.add("show");
+  }
+
+  // 물건 카드
+  const itemBtns = {};
+  Object.entries(ITEMS).forEach(([name, desc], i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "item"; b.id = "item-" + i;
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<canvas width="112" height="112" aria-hidden="true"></canvas><b>${name}</b><small>${desc}</small><span class="num">${i + 1}</span>`;
+    const c = b.querySelector("canvas").getContext("2d");
+    c.translate(56, 56); c.scale(2, 2);
+    drawItemIcon(c, name);
+    b.addEventListener("click", () => toggleItem(name));
+    $("items").appendChild(b);
+    itemBtns[name] = b;
+  });
+
+  // 이야기 글 (한 글자씩)
+  let typeTimer = null, typeFull = "";
+  function setStory(text, tone = "normal", sub = "") {
+    clearInterval(typeTimer);
+    typeFull = text;
+    $("storyBox").dataset.tone = tone;
+    $("storySub").textContent = sub;
+    $("storyLive").textContent = text + (sub ? " " + sub : "");
+    const el = $("story");
+    if (reduceMotion) { el.textContent = text; return; }
+    let i = 0;
+    el.textContent = "";
+    typeTimer = setInterval(() => {
+      i += 1;
+      el.innerHTML = "";
+      el.append(text.slice(0, i));
+      if (i < text.length) { const c = document.createElement("span"); c.className = "caret"; c.textContent = "▍"; el.append(c); }
+      else clearInterval(typeTimer);
+    }, 26);
+  }
+  function finishStory() { clearInterval(typeTimer); $("story").textContent = typeFull; }
+
+  function render() {
+    const phase = S.phase;
+    pipEls.forEach((p, i) => p.classList.toggle("used", i >= S.choicesLeft));
+    $("pips").setAttribute("aria-label", `남은 선택 ${S.choicesLeft}번`);
+
+    for (const [key, m] of Object.entries(meterEls)) {
+      const v = S.stats[key];
+      m.querySelectorAll(".seg").forEach((s, i) => s.classList.toggle("on", i < v));
+      m.querySelector(".m-val").textContent = `${v}/${STAT_MAX}`;
+    }
+
+    const prepLike = phase === "title" || phase === "prep";
+    $("prepPanel").hidden = !prepLike;
+    $("dreamPanel").hidden = prepLike;
+    $("endPanel").hidden = phase !== "ending";
+    $("intro").hidden = phase !== "title";
+    $("timer").hidden = phase !== "prep";
+
+    // 준비 단계
+    for (const [name, b] of Object.entries(itemBtns)) {
+      const on = S.items.includes(name);
+      b.classList.toggle("picked", on);
+      b.classList.toggle("full", !on && S.items.length >= MAX_ITEMS);
+      b.setAttribute("aria-pressed", String(on));
+    }
+    [0, 1].forEach(i => {
+      const slot = $("slot" + i), name = S.items[i];
+      slot.textContent = name || "빈 칸";
+      slot.classList.toggle("on", !!name);
+    });
+    updateTimer();
+
+    // 장면 이름
+    if (prepLike) $("stageLabel").textContent = "잠들기 전 60초";
+    else if (phase === "ending") $("stageLabel").textContent = "아침";
+    else $("stageLabel").textContent = `${S.index + 1}번째 꿈 · ${currentScene().title}`;
+
+    // 선택 버튼
+    choiceBtns.forEach((b, i) => {
+      const letter = "ABC"[i];
+      b.disabled = false;
+      if (phase === "ending") {
+        b.className = "choice ended";
+        b.innerHTML = `<span class="key">${letter}</span><span class="txt">꿈이 끝났어요</span>`;
+        return;
+      }
+      if (prepLike) return;
+      const c = currentScene().choices[i];
+      const missing = c.need && !S.items.includes(c.need);
+      let cls = "choice";
+      if (missing) cls += " locked";
+      if (phase === "result") cls += S.picked === i ? " picked" : " dim";
+      b.className = cls;
+      b.disabled = !!missing;
+      const need = c.need ? `<span class="need ${missing ? "miss" : "have"}">${missing ? `잠김 · ${c.need} 필요` : `가방 속 ${c.need} 사용`}</span>` : "";
+      b.innerHTML = `<span class="key">${letter}</span><span class="txt">${c.label}</span>${need}`;
+    });
+    const nb = $("nextBtn");
+    nb.hidden = phase !== "result";
+    nb.innerHTML = (S.choicesLeft === 0 ? "결말 보기 ▶" : "다음 꿈으로 ▶") + " <kbd>Space</kbd>";
+
+    // 일기
+    const ol = $("diary");
+    ol.innerHTML = "";
+    if (!S.log.length) {
+      const li = document.createElement("li"); li.textContent = "아직 쓴 일기가 없어요."; ol.appendChild(li);
+    }
+    for (const line of S.log) { const li = document.createElement("li"); li.textContent = line; ol.appendChild(li); }
+  }
+
+  function updateTimer() {
+    const t = $("timer");
+    $("timerNum").textContent = S.timeLeft;
+    t.style.setProperty("--p", (S.timeLeft / PREP_SECONDS).toFixed(3));
+    t.classList.toggle("hurry", S.timeLeft <= 10);
+  }
+
+  // ================= 준비 단계 =================
+  function startPrep() {
+    if (S.phase !== "title") return;
+    ensureAudio();
+    S.phase = "prep";
+    clearInterval(prepTimer);
+    prepTimer = setInterval(tick, 1000);
+    render();
+    setStory("고양이가 하품을 해요. 60초 안에 꿈속에 가져갈 물건을 2개 챙겨 주세요!", "normal", "챙긴 물건을 다시 누르면 가방에서 뺄 수 있어요.");
+  }
+
+  function toggleItem(name) {
+    if (S.phase === "title") startPrep();
+    if (S.phase !== "prep") return;
+    const items = S.items;
+    if (items.includes(name)) {
+      items.splice(items.indexOf(name), 1);
+      sfx.drop();
+      setStory(`'${name}'을(를) 가방에서 뺐어요. (${items.length}/${MAX_ITEMS})`);
+    } else if (items.length >= MAX_ITEMS) {
+      sfx.full();
+      itemBtns[name].animate?.([{ transform: "translateX(-5px)" }, { transform: "translateX(5px)" }, { transform: "none" }], { duration: 250 });
+      setStory(`가방이 꽉 찼어요! 물건은 ${MAX_ITEMS}개까지예요.`, "warn", "넣은 물건을 다시 누르면 뺄 수 있어요.");
+      return;
+    } else {
+      items.push(name);
+      sfx.pick();
+      bagPop = performance.now();
+      setStory(`'${name}' 챙겼어요! (${items.length}/${MAX_ITEMS})`, "good", items.length === MAX_ITEMS ? "준비가 끝났으면 '잠들기'를 눌러요." : "");
+    }
+    render();
+  }
+
+  function tick() {
+    if (S.phase !== "prep") return;
+    S.timeLeft -= 1;
+    if (S.timeLeft <= 10 && S.timeLeft > 0) sfx.tick();
+    updateTimer();
+    if (S.timeLeft <= 0) {
+      const left = Object.keys(ITEMS).filter(i => !S.items.includes(i));
+      while (S.items.length < MAX_ITEMS) S.items.push(left.splice(Math.floor(Math.random() * left.length), 1)[0]);
+      S.log.push("시간 끝! 허둥지둥 아무거나 가방에 넣었어요.");
+      fallAsleep();
+    }
+  }
+
+  function fallAsleep() {
+    if (S.phase === "title") startPrep();
+    if (S.phase !== "prep") return;
+    clearInterval(prepTimer); prepTimer = null;
+    S.log.push(`가방: ${S.items.join(", ") || "없음"} → 스르르 잠들었어요.`);
+    S.phase = "scene";
+    sfx.sleep();
+    render();
+    setStory(currentScene().text);
+  }
+
+  // ================= 꿈 단계 =================
+  function flashPips() {
+    const p = $("pips");
+    p.classList.remove("shake"); void p.offsetWidth; p.classList.add("shake");
+  }
+
+  function choose(i) {
+    const phase = S.phase;
+    if (phase === "title" || phase === "prep") return;
+    // 돌발 상황: 선택 세 번을 다 쓴 뒤 누른 클릭
+    if (phase === "result") {
+      const nb = $("nextBtn");
+      nb.classList.remove("nudge"); void nb.offsetWidth; nb.classList.add("nudge");
+      return;
+    }
+    if (phase === "ending" || S.choicesLeft === 0) {
+      S.blocked += 1;
+      S.log.push(`막힌 클릭 ${S.blocked}번: 꿈속 선택은 딱 세 번뿐이에요.`);
+      sfx.blocked();
+      flashPips();
+      render();
+      setStory("선택을 모두 썼어요! 꿈속에서는 딱 세 번만 고를 수 있어요.", "warn", "다시 시작(R)을 눌러 새 꿈을 꿔 보세요.");
+      return;
+    }
+    const c = currentScene().choices[i];
+    if (c.need && !S.items.includes(c.need)) {
+      sfx.full();
+      setStory(`가방에 '${c.need}'이(가) 없어서 고를 수 없어요.`, "warn");
+      return;
+    }
+    const change = applyEffect(c.effect);
+    S.choicesLeft -= 1;
+    S.picked = i;
+    S.log.push(`${S.index + 1}번째 꿈 · ${currentScene().title}: ${c.label} → ${change}`);
+    S.phase = "result";
+    sfx.choose();
+    burst(CAT_X, CAT_Y - 90, c.effect.sleepy > 0 ? "#a99bff" : "#ffd98a");
+    render();
+    setStory(c.result, "good", `(${change})`);
+  }
+
+  function nextScene() {
+    if (S.phase !== "result") return;
+    if (S.choicesLeft === 0) { showEnding(); return; }
+    S.index += 1;
+    S.picked = -1;
+    S.phase = "scene";
+    sfx.next();
+    render();
+    setStory(currentScene().text);
+    if (S.order[S.index] === FINAL_SCENE) setTimeout(() => S && S.order[S.index] === FINAL_SCENE && sfx.alarm(), 350);
+  }
+
+  function showEnding() {
+    S.phase = "ending";
+    const e = S.ending = decideEnding();
+    if (e.score > S.best) { S.best = e.score; S.newBest = true; saveJSON(BEST_KEY, e.score); }
+    const seen = new Set(loadJSON(SEEN_KEY, []));
+    seen.add(e.id); saveJSON(SEEN_KEY, [...seen]);
+    S.log.push(`결말: ${e.title} (점수 ${e.score})`);
+    e.ok ? sfx.good() : sfx.bad();
+    render();
+    setStory(e.story, "end");
+
+    $("endTitle").textContent = e.title;
+    $("endBest").innerHTML = `최고 점수 ${S.best}` + (S.newBest ? `<span class="new">새 기록</span>` : "");
+    const st = e.stats;
+    $("endCalc").innerHTML = [
+      ["용기 " + st.courage + " × 20", st.courage * 20],
+      ["배부름 " + st.full + " × 10", st.full * 10],
+      ["깨어남 (6−졸음 " + st.sleepy + ") × 15", (STAT_MAX - st.sleepy) * 15],
+      ["결말 보너스", e.bonus],
+    ].map(([l, v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("");
+    $("endChips").innerHTML = Object.entries(ENDINGS).map(([id, en]) =>
+      `<span class="chip ${seen.has(id) ? "got" : ""} ${id === e.id ? "now" : ""}">${seen.has(id) ? en.title : "???"}</span>`).join("");
+    $("collectCount").textContent = `${seen.size}/${Object.keys(ENDINGS).length}`;
+    countUp($("endScore"), e.score);
+  }
+
+  function countUp(el, to) {
+    if (reduceMotion) { el.textContent = to; return; }
+    const t0 = performance.now(), dur = 1000;
+    const step = now => {
+      const p = Math.min(1, (now - t0) / dur);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1 && S.phase === "ending") requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function restart() {
+    clearInterval(prepTimer); prepTimer = null;
+    S = newState();
+    particles.length = 0;
+    render();
+    setStory("고양이가 꾸벅꾸벅 졸고 있어요. 준비가 되면 '가방 싸기 시작'을 눌러요.");
+  }
+
+  // ================= 입력 =================
+  $("startBtn").addEventListener("click", startPrep);
+  $("sleepBtn").addEventListener("click", fallAsleep);
+  $("nextBtn").addEventListener("click", nextScene);
+  $("restartBtn").addEventListener("click", () => { ensureAudio(); restart(); });
+  $("againBtn").addEventListener("click", () => { ensureAudio(); restart(); startPrep(); });
+  $("storyBox").addEventListener("click", finishStory);
+  choiceBtns.forEach((b, i) => b.addEventListener("click", () => { ensureAudio(); choose(i); }));
+  $("soundBtn").addEventListener("click", () => {
+    soundOn = !soundOn;
+    if (soundOn) ensureAudio();
+    $("soundBtn").textContent = soundOn ? "소리 켬" : "소리 끔";
+    $("soundBtn").setAttribute("aria-pressed", String(soundOn));
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    const onButton = e.target instanceof HTMLButtonElement || e.target.tagName === "SUMMARY";
+    if ((k === " " || k === "enter") && onButton) return;   // 버튼 자체의 클릭과 겹치지 않게
+    ensureAudio();
+    if (k === " " || k === "enter") {
+      e.preventDefault();
+      if (S.phase === "title") startPrep();
+      else if (S.phase === "prep") fallAsleep();
+      else nextScene();
+    } else if (k === "r") {
+      restart();
+    } else if (S.phase === "prep" || S.phase === "title") {
+      const n = Number(k);
+      if (n >= 1 && n <= 5) toggleItem(Object.keys(ITEMS)[n - 1]);
+    } else {
+      const idx = { a: 0, b: 1, c: 2, "1": 0, "2": 1, "3": 2 }[k];
+      if (idx !== undefined) choose(idx);
+    }
+  });
+
+  // ================= 그림 =================
+  const cv = $("scene"), ctx = cv.getContext("2d");
+  const VW = 800, VH = 400;
+  const CAT_X = 160, CAT_Y = 350;
+  const FUR = "#f4a259", FUR_DARK = "#d4772f", BELLY = "#ffd8b0", PINK = "#ff9fb2";
+  let bagPop = -1e9;
+
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.max(1, Math.round(r.width * dpr));
+    cv.height = Math.max(1, Math.round(r.height * dpr));
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(cv);
+  window.addEventListener("resize", resize);
+  resize();
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  const stars = Array.from({ length: 70 }, () => ({ x: rnd(0, VW), y: rnd(0, VH * 0.7), r: rnd(.6, 1.8), ph: rnd(0, TAU), sp: rnd(1, 3) }));
+  const motes = Array.from({ length: 22 }, () => ({ x: rnd(0, VW), y: rnd(0, VH), v: rnd(6, 18), r: rnd(1, 2.6), ph: rnd(0, TAU) }));
+  const particles = [];
+
+  function burst(x, y, color) {
+    for (let i = 0; i < 26; i++) {
+      const a = rnd(0, TAU), sp = rnd(60, 220);
+      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, life: 1, color, r: rnd(3, 7) });
+    }
+  }
+
+  function ell(x, y, rx, ry, fill, rot = 0) { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, rot, 0, TAU); ctx.fillStyle = fill; ctx.fill(); }
+  function rrect(x, y, w, h, r) { if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+  function circ(x, y, r, fill) { ell(x, y, r, r, fill); }
+  function poly(pts, fill) {
+    ctx.beginPath(); ctx.moveTo(pts[0], pts[1]);
+    for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+  }
+  function sky(a, b) {
+    const g = ctx.createLinearGradient(0, 0, 0, VH);
+    g.addColorStop(0, a); g.addColorStop(1, b);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  }
+  function glow(x, y, r, color, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.restore();
+  }
+  function sparkle(x, y, r, a, color = "#fff5c4") {
+    ctx.save(); ctx.globalAlpha = Math.max(0, a); ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.fill(); ctx.restore();
+  }
+  function drawStars(t, mul = 1) {
+    for (const s of stars) {
+      const a = (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph))) * mul;
+      ctx.globalAlpha = a; circ(s.x, s.y, s.r, "#fff8d6");
+    }
+    ctx.globalAlpha = 1;
+  }
+  function text(str, x, y, size, color, align = "center") {
+    ctx.font = `${size}px Jua, "Gowun Dodum", sans-serif`;
+    ctx.textAlign = align; ctx.textBaseline = "middle";
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
+  }
+
+  // ---- 고양이 ----
+  function drawCat(x, y, { t, eyes = "closed", s = 1, zzz = false, stretch = 0 }) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    const br = Math.sin(t * 2.2);
+    ell(0, 2, 50, 9, "rgba(0,0,0,.28)");
+    // 꼬리
+    const sw = Math.sin(t * 1.7) * 14;
+    ctx.strokeStyle = FUR; ctx.lineWidth = 12; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(30, -12); ctx.bezierCurveTo(78, -8, 70 + sw, -62, 46 + sw * .6, -80); ctx.stroke();
+    ctx.strokeStyle = FUR_DARK; ctx.lineWidth = 12;
+    ctx.beginPath(); ctx.moveTo(48 + sw * .6, -74); ctx.lineTo(46 + sw * .6, -80); ctx.stroke();
+    // 몸
+    ctx.save(); ctx.translate(0, -2); ctx.scale(1 - stretch * .05, 1 + br * .025 + stretch * .08);
+    ell(0, -34, 42, 36, FUR);
+    ell(0, -26, 23, 25, BELLY);
+    ctx.restore();
+    ell(-15, -3, 11, 7, BELLY); ell(15, -3, 11, 7, BELLY);
+    // 머리
+    const hy = -86 - br * 1.2 - stretch * 8;
+    poly([-30, hy - 10, -22, hy - 48, -3, hy - 26], FUR);
+    poly([30, hy - 10, 22, hy - 48, 3, hy - 26], FUR);
+    poly([-24, hy - 16, -20, hy - 39, -9, hy - 25], PINK);
+    poly([24, hy - 16, 20, hy - 39, 9, hy - 25], PINK);
+    circ(0, hy, 33, FUR);
+    ctx.strokeStyle = FUR_DARK; ctx.lineWidth = 3; ctx.lineCap = "round";
+    for (const dx of [-8, 0, 8]) { ctx.beginPath(); ctx.moveTo(dx, hy - 31); ctx.lineTo(dx * .8, hy - 21); ctx.stroke(); }
+    ctx.globalAlpha = .55; ell(-19, hy + 9, 7, 4, PINK); ell(19, hy + 9, 7, 4, PINK); ctx.globalAlpha = 1;
+    // 눈
+    const blink = eyes === "open" && (t % 3.6) < 0.13;
+    for (const ex of [-12, 12]) {
+      if (eyes === "open" && !blink) {
+        ell(ex, hy - 2, 5.5, 7, "#2b1a0e");
+        circ(ex + 2, hy - 5, 2, "#fff");
+      } else if (eyes === "half") {
+        ell(ex, hy, 5, 3.4, "#2b1a0e");
+        ctx.strokeStyle = "#5a2d0c"; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(ex - 7, hy - 2); ctx.lineTo(ex + 7, hy - 2); ctx.stroke();
+      } else {
+        ctx.strokeStyle = "#5a2d0c"; ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.arc(ex, hy - 4, 5.5, .15 * Math.PI, .85 * Math.PI); ctx.stroke();
+      }
+    }
+    poly([-4, hy + 6, 4, hy + 6, 0, hy + 11], "#e0607e");
+    ctx.strokeStyle = "#5a2d0c"; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.arc(-3.5, hy + 12, 3.5, 0, Math.PI); ctx.arc(3.5, hy + 12, 3.5, 0, Math.PI); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1.4;
+    for (const side of [-1, 1]) for (const dy of [-3, 4]) {
+      ctx.beginPath(); ctx.moveTo(side * 14, hy + 8); ctx.lineTo(side * 44, hy + 8 + dy); ctx.stroke();
+    }
+    if (zzz) {
+      for (let i = 0; i < 3; i++) {
+        const p = ((t * .35 + i / 3) % 1);
+        ctx.globalAlpha = Math.sin(p * Math.PI);
+        text("z", 34 + p * 46, hy - 36 - p * 60, 14 + p * 16, "#e9e2ff");
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  // ---- 물건 아이콘 (카드와 장면에서 같이 씀) ----
+  function drawItemIcon(c, name) {
+    c.lineCap = "round"; c.lineJoin = "round";
+    const E = (x, y, rx, ry, f) => { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fillStyle = f; c.fill(); };
+    if (name === "열쇠") {
+      c.strokeStyle = "#ffd166"; c.lineWidth = 5;
+      c.beginPath(); c.arc(-11, 0, 8, 0, TAU); c.stroke();
+      c.beginPath(); c.moveTo(-3, 0); c.lineTo(20, 0); c.moveTo(13, 0); c.lineTo(13, 8); c.moveTo(19, 0); c.lineTo(19, 6); c.stroke();
+    } else if (name === "손전등") {
+      c.fillStyle = "rgba(255,236,150,.45)";
+      c.beginPath(); c.moveTo(8, -6); c.lineTo(22, -15); c.lineTo(22, 15); c.lineTo(8, 6); c.fill();
+      c.fillStyle = "#9aa3c7"; c.fillRect(-20, -5, 22, 10);
+      c.fillStyle = "#cfd5ee"; c.fillRect(0, -8, 9, 16);
+      E(-10, -5, 2.5, 1.6, "#ff6b6b");
+    } else if (name === "생선 간식") {
+      c.fillStyle = "#bfe3ff";
+      c.beginPath(); c.moveTo(10, 0); c.lineTo(22, -9); c.lineTo(22, 9); c.fill();
+      E(-2, 0, 15, 9, "#bfe3ff");
+      c.strokeStyle = "#7fb3dd"; c.lineWidth = 1.5;
+      c.beginPath(); c.arc(2, 0, 6, -1, 1); c.stroke();
+      E(-10, -2, 2, 2, "#1d2a44");
+    } else if (name === "털실 공") {
+      E(0, 0, 15, 15, "#ff8fab");
+      c.strokeStyle = "#ffd0dd"; c.lineWidth = 1.8;
+      for (let i = 0; i < 4; i++) { c.beginPath(); c.ellipse(0, 0, 15 - i * 3, 6 + i * 2, i * .7, 0, Math.PI); c.stroke(); }
+      c.strokeStyle = "#ff8fab"; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(12, 9); c.quadraticCurveTo(20, 18, 24, 12); c.stroke();
+    } else if (name === "방울") {
+      c.strokeStyle = "#ffd166"; c.lineWidth = 3;
+      c.beginPath(); c.arc(0, -14, 4, 0, TAU); c.stroke();
+      E(0, 2, 14, 14, "#ffd166");
+      c.strokeStyle = "#b8860b"; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(-14, 0); c.lineTo(14, 0); c.stroke();
+      E(0, 8, 3, 3, "#7a5200");
+      c.beginPath(); c.moveTo(0, 8); c.lineTo(0, 15); c.stroke();
+    }
+  }
+
+  // ---- 장면들 ----
+  function drawRoom(t) {
+    sky("#2a2258", "#3e3378");
+    // 창문
+    ctx.fillStyle = "#c9b8ff"; ctx.beginPath(); rrect(520, 50, 200, 160, 14); ctx.fill();
+    const g = ctx.createLinearGradient(0, 60, 0, 200); g.addColorStop(0, "#0f0c2a"); g.addColorStop(1, "#2a2060");
+    ctx.fillStyle = g; ctx.fillRect(530, 60, 180, 140);
+    ctx.save(); ctx.beginPath(); ctx.rect(530, 60, 180, 140); ctx.clip();
+    for (let i = 0; i < 14; i++) { const s = stars[i]; circ(530 + (s.x % 180), 60 + (s.y % 140), s.r, `rgba(255,248,214,${.4 + .6 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph))})`); }
+    glow(665, 105, 70, "#fff3c4", .35); circ(665, 105, 24, "#fff3c4"); circ(676, 98, 20, "#0f0c2a");
+    ctx.restore();
+    ctx.fillStyle = "#c9b8ff"; ctx.fillRect(617, 60, 6, 140); ctx.fillRect(530, 127, 180, 6);
+    // 커튼
+    const cw = Math.sin(t * .8) * 4;
+    ctx.fillStyle = "#ff9fb2";
+    ctx.beginPath(); ctx.moveTo(505, 40); ctx.quadraticCurveTo(545 + cw, 130, 515, 230); ctx.lineTo(498, 230); ctx.lineTo(498, 40); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(735, 40); ctx.quadraticCurveTo(695 - cw, 130, 725, 230); ctx.lineTo(742, 230); ctx.lineTo(742, 40); ctx.fill();
+    ctx.fillStyle = "#8a74d6"; ctx.fillRect(490, 34, 260, 8);
+    // 바닥
+    ctx.fillStyle = "#231c47"; ctx.fillRect(0, 330, VW, 70);
+    ctx.strokeStyle = "rgba(255,255,255,.05)"; ctx.lineWidth = 2;
+    for (let x = -40; x < VW; x += 90) { ctx.beginPath(); ctx.moveTo(x, 330); ctx.lineTo(x - 30, 400); ctx.stroke(); }
+    // 침대
+    ctx.fillStyle = "#5b4ea6"; ctx.fillRect(60, 285, 330, 55);
+    ctx.fillStyle = "#4a3f8c"; ctx.fillRect(60, 230, 18, 110);
+    ctx.fillStyle = "#d8ccff"; ctx.fillRect(78, 268, 312, 24);
+    ell(130, 262, 44, 16, "#f2eeff");
+    ctx.fillStyle = "#8f7fe0"; ctx.beginPath(); ctx.moveTo(250, 270); ctx.lineTo(390, 270); ctx.lineTo(390, 300); ctx.lineTo(240, 300); ctx.fill();
+    drawCat(220, 272, { t, eyes: S.phase === "title" ? "closed" : "half", s: .9, zzz: S.phase === "title" });
+    // 가방
+    const pop = Math.max(0, 1 - (performance.now() - bagPop) / 400);
+    ctx.save(); ctx.translate(470, 360); ctx.scale(1 + pop * .12, 1 - pop * .08);
+    ctx.fillStyle = "#a0613a"; ctx.beginPath(); rrect(-46, -56, 92, 60, 14); ctx.fill();
+    ctx.strokeStyle = "#7a4526"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, -56, 22, Math.PI, 0); ctx.stroke();
+    ctx.fillStyle = "#c27a4c"; ctx.fillRect(-46, -40, 92, 10);
+    ctx.restore();
+    S.items.forEach((name, i) => {
+      ctx.save(); ctx.translate(448 + i * 46, 300 - Math.sin(t * 2 + i) * 4); ctx.scale(1.1, 1.1);
+      drawItemIcon(ctx, name); ctx.restore();
+    });
+    text(`${S.items.length}/${MAX_ITEMS}`, 470, 376, 18, "#ffe8c9");
+  }
+
+  function drawDoor(t) {
+    drawStars(t, .7);
+    ctx.fillStyle = "#1c1640"; ctx.fillRect(0, 300, VW, 100);
+    const pulse = .5 + .5 * Math.sin(t * 2);
+    glow(530, 210, 230, "#ffd98a", .18 + pulse * .12);
+    // 빛줄기
+    ctx.fillStyle = `rgba(255,217,138,${.18 + pulse * .1})`;
+    ctx.beginPath(); ctx.moveTo(470, 330); ctx.lineTo(590, 330); ctx.lineTo(700, 400); ctx.lineTo(380, 400); ctx.fill();
+    // 문
+    ctx.beginPath(); ctx.moveTo(470, 330); ctx.lineTo(470, 160); ctx.arc(530, 160, 60, Math.PI, 0); ctx.lineTo(590, 330); ctx.closePath();
+    const wood = ctx.createLinearGradient(470, 0, 590, 0); wood.addColorStop(0, "#9c6c4a"); wood.addColorStop(1, "#6b4630");
+    ctx.fillStyle = wood; ctx.fill();
+    ctx.strokeStyle = "#ffd98a"; ctx.lineWidth = 6; ctx.stroke();
+    ctx.strokeStyle = "rgba(0,0,0,.2)"; ctx.lineWidth = 3;
+    for (const x of [500, 530, 560]) { ctx.beginPath(); ctx.moveTo(x, 130); ctx.lineTo(x, 325); ctx.stroke(); }
+    circ(575, 250, 7, "#ffd98a");
+    poly([572, 262, 578, 262, 576, 276, 574, 276], "#2b1a0e");
+    ctx.fillStyle = `rgba(255,236,170,${.4 + pulse * .5})`; ctx.fillRect(586, 120, 4, 205);
+    for (let i = 0; i < 7; i++) {
+      const a = t * .5 + i * TAU / 7;
+      sparkle(530 + Math.cos(a) * 120, 220 + Math.sin(a) * 110, 6 + 4 * Math.sin(t * 3 + i), .8);
+    }
+  }
+
+  function drawRiver(t) {
+    drawStars(t, .8);
+    ctx.fillStyle = "#1a3456";
+    ctx.beginPath(); ctx.moveTo(0, 240); ctx.quadraticCurveTo(200, 190, 420, 230); ctx.quadraticCurveTo(620, 200, 800, 225); ctx.lineTo(800, 400); ctx.lineTo(0, 400); ctx.fill();
+    const w = ctx.createLinearGradient(0, 255, 0, 400); w.addColorStop(0, "#3b86c4"); w.addColorStop(1, "#173f6b");
+    ctx.fillStyle = w; ctx.fillRect(0, 255, VW, 145);
+    ctx.strokeStyle = "rgba(190,230,255,.45)"; ctx.lineWidth = 2.5;
+    for (let row = 0; row < 6; row++) {
+      ctx.beginPath();
+      for (let x = 0; x <= VW; x += 10) {
+        const y = 268 + row * 23 + Math.sin(x * .03 + t * 2 + row) * 4;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    // 뛰어오르는 생선
+    for (const [x0, off] of [[330, 0], [520, 1.1], [640, 2.2]]) {
+      const cyc = (t + off) % 3.3, p = cyc / 1.3;
+      if (p < 1) {
+        const x = x0 + p * 90, y = 290 - Math.sin(p * Math.PI) * 120;
+        const ang = Math.atan2(-Math.cos(p * Math.PI) * 120 * Math.PI, 90);
+        ctx.save(); ctx.translate(x, y); ctx.rotate(-ang); ctx.scale(-1.6, 1.6);
+        drawItemIcon(ctx, "생선 간식"); ctx.restore();
+      } else if (p < 1.5) {
+        const q = (p - 1) * 2;
+        ctx.strokeStyle = `rgba(220,240,255,${1 - q})`; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(x0 + 90, 292, 10 + q * 30, 3 + q * 8, 0, 0, TAU); ctx.stroke();
+      }
+    }
+    // 강둑
+    ctx.fillStyle = "#2b3f5c";
+    ctx.beginPath(); ctx.moveTo(0, 300); ctx.quadraticCurveTo(160, 290, 280, 330); ctx.lineTo(300, 400); ctx.lineTo(0, 400); ctx.fill();
+  }
+
+  function drawCave(t) {
+    ctx.fillStyle = "#08060f"; ctx.fillRect(0, 0, VW, VH);
+    glow(640, 230, 90, "#ffe7a8", .25 + .1 * Math.sin(t));
+    circ(640, 230, 10, "rgba(255,240,200,.5)");
+    ctx.fillStyle = "#1a1530";
+    for (let i = 0; i < 11; i++) {
+      const x = i * 78 + 10, h = 40 + ((i * 37) % 70);
+      poly([x - 22, 0, x + 22, 0, x, h], "#1a1530");
+    }
+    ctx.fillStyle = "#130f24"; ctx.fillRect(0, 335, VW, 65);
+    // 물방울
+    const dp = (t % 1.8) / 1.8;
+    if (dp < .6) { const y = 70 + (dp / .6) ** 2 * 270; ell(468, y, 3, 5, "#9fc3ff"); }
+    else { const q = (dp - .6) / .4; ctx.strokeStyle = `rgba(159,195,255,${1 - q})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(468, 345, 6 + q * 40, 2 + q * 8, 0, 0, TAU); ctx.stroke(); }
+    // 어둠 속 눈들
+    for (const [x, y, ph] of [[380, 170, 0], [720, 120, 1.7], [300, 90, 3.1]]) {
+      const open = ((t + ph) % 4) > .15 ? 1 : .1;
+      ell(x, y, 4, 4 * open, "rgba(255,255,220,.55)"); ell(x + 16, y, 4, 4 * open, "rgba(255,255,220,.55)");
+    }
+    text("똑…", 500, 110 + Math.sin(t) * 3, 18, "rgba(160,150,210,.6)");
+  }
+
+  function drawYarn(t) {
+    drawStars(t, .6);
+    ctx.fillStyle = "#3a2758"; ctx.fillRect(0, 330, VW, 70);
+    const roll = Math.sin(t * .8) * 22;
+    const bx = 560 + roll, by = 225, r = 112;
+    ell(bx, 335, 100, 12, "rgba(0,0,0,.3)");
+    // 풀린 실
+    ctx.strokeStyle = "#e56b9b"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(bx - 60, by + 90); ctx.bezierCurveTo(400, 360, 330, 320, 230, 345); ctx.stroke();
+    circ(bx, by, r, "#e56b9b");
+    ctx.save(); ctx.beginPath(); ctx.arc(bx, by, r, 0, TAU); ctx.clip();
+    ctx.translate(bx, by); ctx.rotate(roll / r * 3);
+    ctx.strokeStyle = "#ffb3cf"; ctx.lineWidth = 4;
+    for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.ellipse(0, 0, r - 4, 20 + i * 14, i * .45, 0, TAU); ctx.stroke(); }
+    ctx.restore();
+    glow(bx - 40, by - 50, 80, "#ffffff", .15);
+  }
+
+  function drawDog(t) {
+    drawStars(t, .5);
+    ctx.fillStyle = "#24223a"; ctx.fillRect(0, 330, VW, 70);
+    const bob = Math.sin(t * 2) * 4;
+    ctx.save(); ctx.translate(0, bob);
+    ctx.shadowColor = "#8f7fe0"; ctx.shadowBlur = 24;
+    const dk = "#07060d";
+    const tw = Math.sin(t * 8) * 18;
+    ctx.strokeStyle = dk; ctx.lineWidth = 16; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(430, 250); ctx.quadraticCurveTo(390, 200, 400 + tw, 170); ctx.stroke();
+    ell(540, 260, 125, 66, dk);
+    for (const x of [450, 490, 590, 630]) { ctx.fillStyle = dk; ctx.fillRect(x - 12, 290, 24, 50); }
+    circ(660, 185, 62, dk);
+    ell(718, 205, 34, 24, dk);
+    poly([612, 150, 618, 90, 650, 135], dk);
+    poly([690, 140, 712, 88, 720, 150], dk);
+    ctx.shadowBlur = 0;
+    const eg = .6 + .4 * Math.sin(t * 3);
+    glow(670, 175, 30, "#ff5e5e", eg * .8);
+    circ(670, 175, 7, "#ff5e5e"); circ(695, 178, 6, "#ff5e5e");
+    circ(748, 200, 7, "#1d1c2a");
+    ctx.restore();
+    const bark = (t % 2.6) / 2.6;
+    if (bark < .35) {
+      const s = 1 + Math.sin(bark / .35 * Math.PI) * .25;
+      ctx.save(); ctx.translate(660, 70); ctx.scale(s, s); text("왈!", 0, 0, 36, "#ffffff"); ctx.restore();
+    }
+  }
+
+  function drawBed(t) {
+    drawStars(t, .5);
+    glow(640, 80, 110, "#fff3c4", .25);
+    circ(640, 80, 30, "#fff3c4"); circ(654, 70, 26, "#6a5ca9");
+    const fy = Math.sin(t * 1.2) * 8;
+    for (const [dx, dy, r] of [[-90, 20, 50], [-30, 0, 66], [40, -6, 70], [105, 18, 52], [0, 34, 60], [70, 36, 54]]) {
+      circ(540 + dx, 250 + dy + fy + 8, r, "rgba(120,100,200,.4)");
+    }
+    for (const [dx, dy, r] of [[-90, 20, 50], [-30, 0, 66], [40, -6, 70], [105, 18, 52], [0, 34, 60], [70, 36, 54]]) {
+      circ(540 + dx, 250 + dy + fy, r, "#f4f0ff");
+    }
+    ell(470, 228 + fy, 40, 20, "#ffffff");
+    for (let i = 0; i < 3; i++) {
+      const p = ((t * .3 + i / 3) % 1);
+      ctx.globalAlpha = Math.sin(p * Math.PI);
+      text("Z", 600 + p * 60, 160 - p * 90 + fy, 20 + p * 22, "#e9e2ff");
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(40,30,90,.5)"; ctx.fillRect(0, 340, VW, 60);
+  }
+
+  function drawAlarm(t) {
+    drawStars(t, .4);
+    ctx.fillStyle = "#3a2e66"; ctx.fillRect(0, 330, VW, 70);
+    glow(560, 400, 300, "#ffb38a", .25);
+    const ringing = (t % 1.6) < .9;
+    const sh = ringing && !reduceMotion ? Math.sin(t * 50) * .07 : 0;
+    // 소리 물결
+    for (let i = 0; i < 3; i++) {
+      const p = (t * .7 + i / 3) % 1;
+      ctx.strokeStyle = `rgba(255,217,138,${(1 - p) * .8})`; ctx.lineWidth = 4;
+      for (const side of [-1, 1]) {
+        ctx.beginPath(); ctx.arc(560, 190, 90 + p * 90, side < 0 ? Math.PI * .75 : -Math.PI * .25, side < 0 ? Math.PI * 1.25 : Math.PI * .25); ctx.stroke();
+      }
+    }
+    ctx.save(); ctx.translate(560, 190); ctx.rotate(sh);
+    ctx.strokeStyle = "#7a5c00"; ctx.lineWidth = 8; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-40, 60); ctx.lineTo(-55, 85); ctx.moveTo(40, 60); ctx.lineTo(55, 85); ctx.stroke();
+    for (const s of [-1, 1]) { circ(s * 50, -62, 24, "#ffd166"); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s * 50, -62, 24, 0, TAU); ctx.stroke(); }
+    ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(0, -78); ctx.lineTo(0, -92); ctx.stroke();
+    circ(0, 0, 76, "#ffd166"); ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(0, 0, 76, 0, TAU); ctx.stroke();
+    circ(0, 0, 60, "#fffaf0");
+    ctx.strokeStyle = "#3a2600";
+    for (let i = 0; i < 12; i++) { const a = i * TAU / 12; ctx.lineWidth = i % 3 ? 2 : 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 50, Math.sin(a) * 50); ctx.lineTo(Math.cos(a) * 56, Math.sin(a) * 56); ctx.stroke(); }
+    ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -38); ctx.stroke();
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(28, 8); ctx.stroke();
+    circ(0, 0, 5, "#e63946");
+    ctx.restore();
+    if (ringing) text("따르릉!", 700, 80, 30, "#ffd98a");
+  }
+
+  function drawEnding(t, since) {
+    const e = S.ending;
+    if (e.ok) {
+      sky("#7fb6f0", "#ffd9a0");
+      const sy = Math.max(250, 430 - since * 90);
+      ctx.save(); ctx.translate(640, sy); ctx.rotate(t * .15);
+      ctx.fillStyle = "rgba(255,200,90,.35)";
+      for (let i = 0; i < 12; i++) { ctx.rotate(TAU / 12); ctx.beginPath(); ctx.moveTo(-10, -90); ctx.lineTo(0, -150); ctx.lineTo(10, -90); ctx.fill(); }
+      ctx.restore();
+      glow(640, sy, 160, "#ffe08a", .6);
+      circ(640, sy, 72, "#ffb627");
+      ctx.fillStyle = "#8fc77a"; ctx.beginPath(); ctx.moveTo(0, 330); ctx.quadraticCurveTo(300, 290, 520, 325); ctx.quadraticCurveTo(680, 345, 800, 320); ctx.lineTo(800, 400); ctx.lineTo(0, 400); ctx.fill();
+      for (const [x, y] of [[120, 70], [330, 50]]) {
+        const cx = x + Math.sin(t * .3 + x) * 12;
+        circ(cx, y, 22, "#fff"); circ(cx + 26, y + 4, 18, "#fff"); circ(cx - 24, y + 6, 16, "#fff");
+      }
+      drawCat(260, 350, { t, eyes: "open", s: 1.25, stretch: Math.max(0, Math.sin(t * 1.5)) });
+    } else {
+      sky("#0b0818", "#1d1640");
+      drawStars(t, 1);
+      circ(640, 90, 34, "#fff3c4"); circ(655, 80, 30, "#0e0b20");
+      ctx.fillStyle = "#18122f"; ctx.fillRect(0, 330, VW, 70);
+      drawCat(260, 350, { t, eyes: "closed", s: 1.25, zzz: true });
+    }
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 12;
+    text(e.title, 420, 150, 46, e.ok ? "#5a2d00" : "#ffd98a");
+    ctx.restore();
+  }
+
+  const SCENE_DRAW = { door: drawDoor, river: drawRiver, cave: drawCave, yarn: drawYarn, dog: drawDog, bed: drawBed, alarm: drawAlarm };
+
+  let lastView = "", viewSince = 0, lastNow = performance.now();
+  function frame(now) {
+    const dt = Math.min(.05, (now - lastNow) / 1000); lastNow = now;
+    const t = now / 1000 * (reduceMotion ? .2 : 1);
+    const view = (S.phase === "title" || S.phase === "prep") ? "room" : S.phase === "ending" ? "ending" : S.order[S.index];
+    if (view !== lastView) { lastView = view; viewSince = now; }
+    const since = (now - viewSince) / 1000;
+
+    ctx.setTransform(cv.width / VW, 0, 0, cv.height / VH, 0, 0);
+    ctx.clearRect(0, 0, VW, VH);
+
+    if (view === "room") drawRoom(t);
+    else if (view === "ending") drawEnding(t, since);
+    else {
+      sky(...SCENES[view].sky);
+      SCENE_DRAW[view](t);
+      const sleepy = S.stats.sleepy;
+      drawCat(CAT_X, CAT_Y, { t, eyes: sleepy >= 5 ? "closed" : sleepy >= 3 ? "half" : "open", zzz: sleepy >= 5 });
+      if (view === "cave") {
+        const v = ctx.createRadialGradient(CAT_X, CAT_Y - 60, 60, CAT_X, CAT_Y - 60, 260);
+        v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,.6)");
+        ctx.fillStyle = v; ctx.fillRect(0, 0, VW, VH);
+      }
+    }
+
+    // 떠다니는 꿈 먼지
+    if (view !== "ending" || !S.ending.ok) {
+      for (const m of motes) {
+        m.y -= m.v * dt; m.x += Math.sin(t + m.ph) * 8 * dt;
+        if (m.y < -5) { m.y = VH + 5; m.x = rnd(0, VW); }
+        ctx.globalAlpha = .35 + .3 * Math.sin(t * 2 + m.ph);
+        circ(m.x, m.y, m.r, "#e3dbff");
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // 선택 순간 반짝이
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life -= dt * 1.1; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * dt;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      sparkle(p.x, p.y, p.r * p.life + 1, p.life, p.color);
+    }
+
+    // 장면 전환 페이드
+    if (since < .7) {
+      ctx.fillStyle = `rgba(10,7,25,${1 - since / .7})`;
+      ctx.fillRect(0, 0, VW, VH);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  restart();
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
