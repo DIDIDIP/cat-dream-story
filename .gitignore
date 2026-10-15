@@ -1,0 +1,10 @@
+# 실행하면 생기는 파일
+work/
+__pycache__/
+
+# 이 저장소에는 최종 게임만 올립니다
+cat_dream.py
+cat_dream_1.py
+cat_dream_2.py
+cat_dream_plus.py
+robot_garden.py
