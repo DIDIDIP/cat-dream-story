@@ -408,15 +408,15 @@ def flash(times=6):
 
 def choose(i):
     phase = state["phase"]
+    if phase == "result":
+        next_button.flash()                                    # 결과를 읽는 중: '다음'을 먼저 누르라고 알려 줌
+        return
     # ---- 돌발 상황: 선택 세 번을 다 쓴 뒤 누른 클릭 ----
     if phase == "ending" or state["choices_left"] == 0:
         state["blocked"] += 1
         state["log"].append(f"막힌 클릭 {state['blocked']}번: 꿈속 선택은 딱 세 번뿐이에요.")
         refresh("선택을 모두 썼어요! 꿈속에서는 딱 세 번만 고를 수 있어요. 다시 시작(R)을 눌러 주세요.", "#e63946")
         flash()
-        return
-    if phase == "result":
-        next_button.flash()                                    # '다음' 버튼을 깜빡여 먼저 누르라고 알려 줌
         return
     if phase != "scene":
         return

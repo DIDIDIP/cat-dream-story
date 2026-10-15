@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>고양이의 꿈 일기</title>
+  <meta name="description" content="딱 세 번의 선택으로 아침을 맞는 Python 선택지 게임">
+  <!-- PyScript: 브라우저 안에서 Python을 실행해 주는 도구 -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2025.2.4/core.css">
+  <script type="module" src="https://pyscript.net/releases/2025.2.4/core.js"></script>
+  <style>
+    :root {
+      --bg: #f6f3ff; --ink: #2b2257; --soft: #6b5fb5; --card: #efe8ff;
+      --muted: #e6e3ef; --accent: #0f766e; --warn: #e63946; --gold: #b5651d;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+           font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+    .app { max-width: 720px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.5rem; margin: 4px 0 2px; }
+    .sub { margin: 0 0 12px; color: var(--soft); font-size: .9rem; }
+    #loading { padding: 60px 16px; text-align: center; color: var(--soft); }
+    #loading .dot { display: inline-block; animation: bob 1s infinite ease-in-out; }
+    @keyframes bob { 50% { transform: translateY(-6px); } }
+    .stage svg { display: block; width: 100%; height: auto; border-radius: 12px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+    #choices { font-size: 1.25rem; font-weight: 700; }
+    #stats, #bag { font-size: .9rem; margin-top: 2px; }
+    #bag { color: var(--soft); }
+    #story { min-height: 4.2em; margin: 10px 0; font-weight: 700; white-space: pre-line; line-height: 1.5; }
+    button { font: inherit; border: 0; border-radius: 10px; cursor: pointer; color: var(--ink); }
+    button:disabled { cursor: not-allowed; }
+    .dark { background: var(--ink); color: #fff; padding: 8px 14px; font-weight: 700; }
+    .grid { display: grid; gap: 8px; }
+    #items { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+    #items button { background: var(--card); padding: 10px 6px; font-size: .85rem; line-height: 1.35; }
+    #items button b { display: block; font-size: .95rem; }
+    #items button.picked { background: #ffd166; box-shadow: inset 0 0 0 2px #b8860b; }
+    .prep-side { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+    #timer { font-size: 1.3rem; font-weight: 700; }
+    #timer.hurry { color: var(--warn); }
+    #dream { grid-template-columns: repeat(3, 1fr) auto; }
+    #dream .choice { background: var(--card); padding: 12px 8px; font-weight: 700; font-size: .9rem; min-height: 64px; }
+    #dream .choice small { display: block; font-weight: 400; color: var(--soft); }
+    #dream .choice.waiting { background: var(--muted); color: #6b6b80; }
+    #dream .choice.locked, #dream .choice:disabled { background: #ece9f5; color: #a8a3bd; }
+    #dream .choice.over { background: #d6d6d6; color: #888; }
+    #next { padding: 12px 14px; font-weight: 700; background: #d6d6d6; color: #888; }
+    #next:enabled { background: var(--ink); color: #fff; }
+    .pulse { animation: pulse .5s 2; }
+    @keyframes pulse { 50% { transform: scale(1.08); } }
+    .flash { animation: flash .24s 3; }
+    @keyframes flash { 50% { color: var(--warn); } }
+    h2 { font-size: 1rem; margin: 14px 0 6px; }
+    #diary { margin: 0; padding: 10px 10px 10px 30px; background: #fff; border-radius: 10px;
+             font-size: .85rem; min-height: 90px; line-height: 1.6; }
+    .keys { color: var(--soft); font-size: .8rem; margin-top: 10px; }
+    footer { margin-top: 18px; font-size: .8rem; color: var(--soft); }
+    footer a { color: var(--soft); }
+    [hidden] { display: none !important; }
+    @media (max-width: 560px) {
+      #dream { grid-template-columns: 1fr; }
+      .keys { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>🐱 고양이의 꿈 일기</h1>
+    <p class="sub">꿈속에서 고를 수 있는 선택은 딱 세 번. 아침을 맞을 수 있을까요?</p>
+
+    <div id="loading"><span class="dot">💤</span> 꿈을 불러오는 중이에요… (처음엔 몇 초 걸려요)</div>
+
+    <section id="game" hidden>
+      <div id="stage" class="stage"></div>
+      <div class="row">
+        <span id="choices"></span>
+        <button id="restart" class="dark">↺ 다시 시작</button>
+      </div>
+      <div id="stats"></div>
+      <div id="bag"></div>
+      <p id="story"></p>
+
+      <div id="prep">
+        <div id="items" class="grid"></div>
+        <div class="prep-side">
+          <span id="timer"></span>
+          <button id="sleep" class="dark">잠들기 ▶</button>
+        </div>
+      </div>
+
+      <div id="dream" class="grid" hidden>
+        <button class="choice" id="choice-0"></button>
+        <button class="choice" id="choice-1"></button>
+        <button class="choice" id="choice-2"></button>
+        <button id="next">다음 ▶</button>
+      </div>
+
+      <p class="keys">키보드: A·B·C = 선택 · 스페이스 = 잠들기/다음 · R = 다시 시작</p>
+      <h2>꿈 일기</h2>
+      <ol id="diary"></ol>
+    </section>
+
+    <footer>
+      Python(PyScript)으로 브라우저에서 실행됩니다 ·
+      <a href="https://github.com/DIDIDIP/cat-dream-story">소스 코드</a>
+    </footer>
+  </main>
+
+  <!-- 게임 규칙과 화면 동작은 모두 main.py(파이썬)에 있습니다 -->
+  <script type="py" src="./main.py"></script>
+</body>
+</html>
